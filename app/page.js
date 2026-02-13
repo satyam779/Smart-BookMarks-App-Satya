@@ -9,6 +9,16 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // If Supabase redirected here with tokens in hash (instead of /auth/callback),
+    // redirect to callback page so it can process and clean the URL
+    if (
+      typeof window !== "undefined" &&
+      window.location.hash?.includes("access_token")
+    ) {
+      window.location.replace(`/auth/callback${window.location.hash}`);
+      return;
+    }
+
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
