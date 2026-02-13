@@ -6,7 +6,7 @@ A simple bookmark manager built with **Next.js App Router**, **Supabase**, and *
 👉 https://smart-bookmark-app1-weld.vercel.app
 
 ## 📦 GitHub Repository
-👉 https://github.com/satyam779/Smart-Bookmark-App
+👉 https://github.com/satyam779/Smart-BookMarks-App-Satya
 
 ---
 
