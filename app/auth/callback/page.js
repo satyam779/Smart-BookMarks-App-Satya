@@ -1,48 +1,29 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../../lib/supabaseClient";
 
 export default function CallbackPage() {
   const router = useRouter();
-  const [error, setError] = useState(null);
 
   useEffect(() => {
-    let mounted = true;
+    const handleAuthCallback = async () => {
+      const params = new URLSearchParams(window.location.search);
+      const code = params.get("code");
 
-    const handleCallback = async () => {
-      // Supabase parses #access_token on page load - poll for session
-      for (let i = 0; i < 20; i++) {
-        if (!mounted) return;
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session) {
-          if (typeof window !== "undefined") {
-            window.history.replaceState(null, "", "/");
-          }
-          router.replace("/");
-          return;
+      if (code) {
+        const { error } = await supabase.auth.exchangeCodeForSession(code);
+        if (error) {
+          console.error("OAuth callback error:", error.message);
         }
-        await new Promise((r) => setTimeout(r, 100));
       }
-      setError("Sign-in timed out. Please try again.");
+
+      router.replace("/");
     };
 
-    handleCallback();
-    return () => { mounted = false; };
+    handleAuthCallback();
   }, [router]);
 
-  if (error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-black">
-        <p className="text-red-500 p-4">Error: {error}</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-black">
-      <p className="text-white p-4">Signing you in...</p>
-    </div>
-  );
+  return <p className="p-4">Signing you in...</p>;
 }
