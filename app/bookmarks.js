@@ -9,6 +9,7 @@ export default function Bookmarks({ user }) {
   const [bookmarks, setBookmarks] = useState([]);
 
   useEffect(() => {
+    if (!user) return;
     fetchBookmarks();
 
     const channel = supabase
@@ -30,38 +31,52 @@ export default function Bookmarks({ user }) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [user]);
 
   const fetchBookmarks = async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("bookmarks")
       .select("*")
+      .eq("user_id", user.id)
       .order("created_at", { ascending: false });
 
-    setBookmarks(data || []);
+    if (error) {
+      console.error("Error fetching bookmarks:", error);
+    } else {
+      setBookmarks(data || []);
+    }
   };
 
-  const addBookmark = async () => {
-    if (!title || !url) return;
-
-    let formattedUrl = url;
+  const formatUrl = (input) => {
+    let formattedUrl = input.trim().toLowerCase();
+    
     if (
       !formattedUrl.startsWith("http://") &&
       !formattedUrl.startsWith("https://")
     ) {
+      const domainPattern = /^[a-zA-Z0-9][-a-zA-Z0-9]*\.[a-zA-Z]{2,}/;
+      if (!domainPattern.test(formattedUrl)) {
+        formattedUrl = formattedUrl + ".com";
+      }
       formattedUrl = "https://" + formattedUrl;
     }
+    
+    return formattedUrl;
+  };
+
+  const addBookmark = async () => {
+    if (!title.trim() || !url.trim()) return;
+
+    const formattedUrl = formatUrl(url);
 
     await supabase.from("bookmarks").insert({
-      title,
+      title: title.trim(),
       url: formattedUrl,
       user_id: user.id,
     });
 
     setTitle("");
     setUrl("");
-
-    // Refresh list after adding
     fetchBookmarks();
   };
 
